@@ -1,0 +1,38 @@
+image: aligent/serverless
+
+definitions:
+  services:
+    docker:
+      memory: 3072
+  steps:
+    - step: &test
+        name: Test
+        script:
+          - npm ci
+          - npm run lint
+          - npm run test
+    - step: &push-serverless
+        name: 'Deploy service'
+        script:
+          - pipe: docker://aligent/serverless-deploy-pipe:latest
+            variables:
+              AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+              AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+              CFN_ROLE: ${CFN_ROLE}
+              DEBUG: ${CI_DEBUG}
+
+pipelines:
+  pull-requests:
+    '**':
+      - step: *test
+  branches:
+    production:
+      - step:
+          <<: *push-serverless
+          name: 'Deploy Production'
+          deployment: Production
+    staging:
+      - step:
+          <<: *push-serverless
+          name: 'Deploy Staging'
+          deployment: Staging

@@ -1,0 +1,29 @@
+version: '3.7'
+
+services:
+  localstack:
+    image: localstack/localstack:1.0.4
+    container_name: localstack-debug
+    networks:
+      localstack-net:
+        ipv4_address: ${AWS_LOCALSTACK:-172.20.0.100}
+    environment:
+      - DEBUG=1
+      - PERSISTENCE=1
+      - LAMBDA_EXECUTOR=docker-reuse
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEFAULT_REGION=ap-southeast-2
+      - START_WEB=0
+    volumes:
+      - ./.localstack:/var/lib/localstack
+      - ./.localstack-init/init.sh:/docker-entrypoint-initaws.d/localstack-init.sh
+      - '/var/run/docker.sock:/var/run/docker.sock'
+
+networks:
+  localstack-net:
+    name: localstack-net
+    external: false
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
